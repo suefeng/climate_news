@@ -1,0 +1,2 @@
+class NewsThread < ApplicationRecord
+end

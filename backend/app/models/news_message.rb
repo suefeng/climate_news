@@ -1,0 +1,2 @@
+class NewsMessage < ApplicationRecord
+end
