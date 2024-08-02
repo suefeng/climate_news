@@ -6,8 +6,9 @@ class NewsMessage < ApplicationRecord
   validates :message_body, presence: true
 
   def bing_search_call
-    return if Rails.env.test? || skip_bing_search
+    return if Rails.env.test? || skip_bing_search || is_bot == true
 
-    BingSearch.call(message_body)
+    parsed_message = message_body["query"]
+    BingSearch.call(parsed_message) if parsed_message != ''
   end
 end

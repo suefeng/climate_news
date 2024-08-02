@@ -1,1 +1,18 @@
 require: rubocop-rails
+Style/Documentation:
+  Enabled: false
+Metrics/BlockLength:
+  AllowedMethods: ["describe", "context"]
+Style/FrozenStringLiteralComment:
+  Enabled: false
+Style/ClassAndModuleChildren:
+  Enabled: false
+AllCops:
+  SuggestExtensions: false
+  NewCops: enable
+  Exclude:
+    - "app/views/**/*.erb"
+    - "db/migrate/**/*.*"
+    - "db/*"
+    - "bin/*"
+    - "vendor/**/*"

@@ -11,7 +11,6 @@ class BingSearch < ApplicationService
   attr_accessor :search_term
 
   def initialize(search_term)
-    super
     @access_key = search_api_key
     @origin_uri = 'https://api.bing.microsoft.com'
     @path = '/v7.0/search'
@@ -19,16 +18,18 @@ class BingSearch < ApplicationService
   end
 
   def call
-    return { "error": 'Invalid Bing Search API subscription key!' } unless valid_key?(@access_key)
+    return { error: 'Invalid Bing Search API subscription key!' } unless valid_key?(@access_key)
 
     uri = URI("#{@origin_uri}#{@path}?q=#{url_encode(@term)}&count=5&responseFilter=webpages,news")
     response = create_request(uri)
-    return { "error": 'no results found' } if response.is_a?(Net::HTTPNotFound)
+    return { error: 'no results found' } if response.is_a?(Net::HTTPNotFound)
 
     parsed_response = JSON.parse(response.body)
     results = parsed_response.dig('webPages', 'value')
+    return { error: 'no results found' } if results.blank?
+
     NewsMessage.create(message_body: results, is_bot: true)
-    JSON.pretty_generate(JSON({ "error": 'no results found' })) if results.empty?
+
     create_news_records(results[0..4])
   end
 
@@ -40,16 +41,6 @@ class BingSearch < ApplicationService
 
   def create_request(uri)
     request = build_request(uri)
-    execute_request(request, uri)
-  end
-
-  def build_request(uri)
-    request = Net::HTTP::Get.new(uri)
-    request['Ocp-Apim-Subscription-Key'] = @access_key
-    request
-  end
-
-  def execute_request(request, uri)
     call_attempt = 0
     begin
       Net::HTTP.start(uri.host, uri.port, use_ssl: uri.scheme == 'https') do |http|
@@ -59,6 +50,12 @@ class BingSearch < ApplicationService
     rescue StandardError => e
       Rails.logger.error "Failed to call #{uri}: #{e.message}"
     end
+  end
+
+  def build_request(uri)
+    request = Net::HTTP::Get.new(uri)
+    request['Ocp-Apim-Subscription-Key'] = @access_key
+    request
   end
 
   def summary(url)
@@ -75,7 +72,7 @@ class BingSearch < ApplicationService
     html = Nokogiri::HTML(response.body)
     img_elements = html.css('body').css('img')
 
-    img_elements.select { |img| valid_src?(img['src']) }.map { |img| img['src'] }
+    img_elements.select { |img| valid_src?(img['src']) }.pluck('src')
   end
 
   def valid_src?(src)

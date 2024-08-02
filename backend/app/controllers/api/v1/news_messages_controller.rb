@@ -15,10 +15,8 @@ class Api::V1::NewsMessagesController < ApplicationController
 
   # POST /news_messages
   def create
-    query = params[:news_message][:message_body] || "What's the latest climate news for #{Date.today.strftime('%B %d, %Y')}"
-    message = NewsMessage.find_by("message_body->>'query' = ? AND is_bot = ?", query, false)
-    if message.nil?
-      @news_message = NewsMessage.new(message_body: { query: }, is_bot: false)
+    if NewsMessage.find_by("message_body->>'query' = ? AND is_bot = ?", query, false).nil?
+      @news_message = NewsMessage.new(message_body: { "query": query }, is_bot: false)
 
       if @news_message.save
         render json: @news_message, status: :created
@@ -45,5 +43,13 @@ class Api::V1::NewsMessagesController < ApplicationController
   # Only allow a list of trusted parameters through.
   def news_message_params
     params.require(:news_message).permit(:message_body)
+  end
+
+  def timestamp
+    Time.zone.today.strftime('%B %d, %Y')
+  end
+
+  def query
+    params[:news_message] ? params[:news_message][:message_body] : "What's the latest climate news for #{timestamp}"
   end
 end

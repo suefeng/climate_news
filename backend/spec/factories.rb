@@ -11,6 +11,6 @@ FactoryBot.define do
 
   factory :news_message do
     is_bot { false }
-    message_body { { "query": "What's the latest climate news for August 02, 2024" } }
+    message_body { { query: "What's the latest climate news for August 02, 2024" } }
   end
 end

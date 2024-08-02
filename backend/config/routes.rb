@@ -1,8 +1,8 @@
 Rails.application.routes.draw do
   namespace :api do
     namespace :v1 do
-      resources :news, only: [:index, :show, :destroy]
-      resources :news_messages, only: [:index, :show, :create, :destroy]
+      resources :news, only: %i[index show destroy]
+      resources :news_messages, only: %i[index show create destroy]
     end
   end
 
@@ -10,7 +10,7 @@ Rails.application.routes.draw do
 
   # Reveal health status on /up that returns 200 if the app boots with no exceptions, otherwise 500.
   # Can be used by load balancers and uptime monitors to verify that the app is live.
-  get "up" => "rails/health#show", as: :rails_health_check
+  get 'up' => 'rails/health#show', as: :rails_health_check
 
   # Defines the root path route ("/")
   # root "posts#index"
