@@ -1,5 +1,5 @@
 class Api::V1::NewsMessagesController < ApplicationController
-  before_action :set_news_message, only: %i[ show destroy ]
+  before_action :set_news_message, only: %i[show destroy]
 
   # GET /news_messages
   def index
@@ -18,7 +18,7 @@ class Api::V1::NewsMessagesController < ApplicationController
     query = params[:news_message][:message_body] || "What's the latest climate news for #{Date.today.strftime('%B %d, %Y')}"
     message = NewsMessage.find_by("message_body->>'query' = ? AND is_bot = ?", query, false)
     if message.nil?
-      @news_message = NewsMessage.new(message_body: {query: query}, is_bot: false)
+      @news_message = NewsMessage.new(message_body: { query: }, is_bot: false)
 
       if @news_message.save
         render json: @news_message, status: :created
@@ -26,7 +26,7 @@ class Api::V1::NewsMessagesController < ApplicationController
         render json: @news_message.errors, status: :unprocessable_entity
       end
     else
-      render json: { query: "Already checked today. Check again tomorrow." }, status: :ok
+      render json: { query: 'Already checked today. Check again tomorrow.' }, status: :ok
     end
   end
 
@@ -36,13 +36,14 @@ class Api::V1::NewsMessagesController < ApplicationController
   end
 
   private
-    # Use callbacks to share common setup or constraints between actions.
-    def set_news_message
-      @news_message = NewsMessage.find(params[:id])
-    end
 
-    # Only allow a list of trusted parameters through.
-    def news_message_params
-      params.require(:news_message).permit(:message_body)
-    end
+  # Use callbacks to share common setup or constraints between actions.
+  def set_news_message
+    @news_message = NewsMessage.find(params[:id])
+  end
+
+  # Only allow a list of trusted parameters through.
+  def news_message_params
+    params.require(:news_message).permit(:message_body)
+  end
 end
