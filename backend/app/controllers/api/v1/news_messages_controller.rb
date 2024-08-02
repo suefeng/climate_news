@@ -1,36 +1,32 @@
 class Api::V1::NewsMessagesController < ApplicationController
-  before_action :set_news_message, only: %i[ show update destroy ]
+  before_action :set_news_message, only: %i[ show destroy ]
 
   # GET /news_messages
   def index
     @news_messages = NewsMessage.all
 
-    render json: @news_messages
+    render json: @news_messages, status: :ok
   end
 
   # GET /news_messages/1
   def show
-    render json: @news_message
+    render json: @news_message, status: :ok
   end
 
   # POST /news_messages
   def create
-    query = "What's the latest climate news for #{Date.today.strftime('%B %d, %Y')}"
-    @news_message = NewsMessage.new(message_body: query)
+    query = params[:news_message][:message_body] || "What's the latest climate news for #{Date.today.strftime('%B %d, %Y')}"
+    message = NewsMessage.find_by("message_body->>'query' = ? AND is_bot = ?", query, false)
+    if message.nil?
+      @news_message = NewsMessage.new(message_body: {query: query}, is_bot: false)
 
-    if @news_message.save
-      render json: @news_message, status: :created
+      if @news_message.save
+        render json: @news_message, status: :created
+      else
+        render json: @news_message.errors, status: :unprocessable_entity
+      end
     else
-      render json: @news_message.errors, status: :unprocessable_entity
-    end
-  end
-
-  # PATCH/PUT /news_messages/1
-  def update
-    if @news_message.update(news_message_params)
-      render json: @news_message
-    else
-      render json: @news_message.errors, status: :unprocessable_entity
+      render json: { query: "Already checked today. Check again tomorrow." }, status: :ok
     end
   end
 
@@ -47,6 +43,6 @@ class Api::V1::NewsMessagesController < ApplicationController
 
     # Only allow a list of trusted parameters through.
     def news_message_params
-      params.fetch(:news_message, {})
+      params.require(:news_message).permit(:message_body)
     end
 end

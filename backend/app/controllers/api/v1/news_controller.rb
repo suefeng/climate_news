@@ -5,12 +5,12 @@ class Api::V1::NewsController < ApplicationController
   def index
     @news = News.all
 
-    render json: @news
+    render json: @news, status: :ok
   end
 
   # GET /news/1
   def show
-    render json: @news
+    render json: @news, status: :ok
   end
 
   # DELETE /news/1

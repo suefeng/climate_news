@@ -22,7 +22,7 @@ class BingSearch < ApplicationService
       return JSON::pretty_generate(JSON({"error": "Invalid Bing Search API subscription key!"}))
     end
 
-    uri = URI(@origin_uri + @path + "?q=" + url_encode(@term))
+    uri = URI(@origin_uri + @path + "?q=" + url_encode(@term) + "&count=5&responseFilter=webpages,news")
 
     response = create_request(uri)
 
@@ -31,7 +31,7 @@ class BingSearch < ApplicationService
     parsed_response = JSON.parse(response.body)
     results = parsed_response.dig("webPages", "value")
 
-    NewsMessage.create(message_body: results)
+    NewsMessage.create(message_body: results, is_bot: true)
     return JSON::pretty_generate(JSON({"error": "no results found" })) if results.length == 0 
 
     results[0..4].map do |result|

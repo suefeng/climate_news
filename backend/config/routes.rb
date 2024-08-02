@@ -2,7 +2,7 @@ Rails.application.routes.draw do
   namespace :api do
     namespace :v1 do
       resources :news, only: [:index, :show, :destroy]
-      resources :news_messages, only: [:index, :show, :create, :update, :destroy]
+      resources :news_messages, only: [:index, :show, :create, :destroy]
     end
   end
 
