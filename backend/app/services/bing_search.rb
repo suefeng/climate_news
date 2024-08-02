@@ -11,18 +11,19 @@ class BingSearch < ApplicationService
   attr_accessor :search_term
 
   def initialize(search_term)
-    @accessKey = search_api_key
+    super
+    @access_key = search_api_key
     @origin_uri = 'https://api.bing.microsoft.com'
     @path = '/v7.0/search'
     @term = search_term
   end
 
   def call
-    return JSON.pretty_generate(JSON({ "error": 'Invalid Bing Search API subscription key!' })) @accessKey.length != 32
+    return { "error": 'Invalid Bing Search API subscription key!' } unless valid_key?(@access_key)
 
     uri = URI("#{@origin_uri}#{@path}?q=#{url_encode(@term)}&count=5&responseFilter=webpages,news")
     response = create_request(uri)
-    return JSON.pretty_generate(JSON({ "error": 'no results found' })) if response.is_a?(Net::HTTPNotFound)
+    return { "error": 'no results found' } if response.is_a?(Net::HTTPNotFound)
 
     parsed_response = JSON.parse(response.body)
     results = parsed_response.dig('webPages', 'value')
@@ -33,13 +34,25 @@ class BingSearch < ApplicationService
 
   private
 
-  def create_request(uri)
-    request = Net::HTTP::Get.new(uri)
-    request['Ocp-Apim-Subscription-Key'] = @accessKey
+  def valid_key?(key)
+    key.length == 32
+  end
 
+  def create_request(uri)
+    request = build_request(uri)
+    execute_request(request, uri)
+  end
+
+  def build_request(uri)
+    request = Net::HTTP::Get.new(uri)
+    request['Ocp-Apim-Subscription-Key'] = @access_key
+    request
+  end
+
+  def execute_request(request, uri)
     call_attempt = 0
     begin
-      response = Net::HTTP.start(uri.host, uri.port, use_ssl: uri.scheme == 'https') do |http|
+      Net::HTTP.start(uri.host, uri.port, use_ssl: uri.scheme == 'https') do |http|
         call_attempt += 1
         http.request(request) if call_attempt < 3
       end
@@ -50,47 +63,49 @@ class BingSearch < ApplicationService
 
   def summary(url)
     response = create_request(url)
-    summary_text = ''
-    if response.is_a?(Net::HTTPSuccess) && response.body
-      html = Nokogiri::HTML(response.body)
+    return unless response.is_a?(Net::HTTPSuccess) && response.body
 
-      summary_text = html.css('body').css('p').first(5).map(&:text).join(' ') if html
-    end
-    summary_text
+    Nokogiri::HTML(response.body).css('body').css('p').first(5).map(&:text).join(' ')
   end
 
-  def images(url)
-    response = create_request(url)
-    images = []
-    if response.is_a?(Net::HTTPSuccess) && response.body
-      html = Nokogiri::HTML(response.body)
+  def images(uri)
+    response = Net::HTTP.get_response(uri)
+    return [] unless response.is_a?(Net::HTTPSuccess) && response.body
 
-      if html
-        html.css('body').css('img').map do |img|
-          next unless !img['src'].nil? &&
-                      img['src'].match(%r{^https?:/}) &&
-                      img['src'].match(/(jpg|jpeg|png|gif)/i)
+    html = Nokogiri::HTML(response.body)
+    img_elements = html.css('body').css('img')
 
-          images.push(img['src'])
-        end
-      end
-    end
-    images
+    img_elements.select { |img| valid_src?(img['src']) }.map { |img| img['src'] }
+  end
+
+  def valid_src?(src)
+    return false unless src&.match?(%r{^https?:/})
+    return false unless src&.match?(/(jpg|jpeg|png|gif)/i)
+
+    true
   end
 
   def create_news_records(results)
     results.map do |result|
-      news_article = News.new
-      uri = URI(result['url'])
-      article_summary = summary(uri)
-      article_images = images(uri)
-      news_article.title = result['name']
-      news_article.url = result['url']
-      news_article.summary = article_summary || result['snippet']
-      news_article.published_at = result['datePublished'] && DateTime.iso8601(result['datePublished'])
-      news_article.site_name = result['siteName']
-      news_article.images = article_images
-      news_article.save
+      create_news_record(result)
     end
+  end
+
+  def create_news_record(result)
+    uri = URI(result['url'])
+    News.create(
+      title: result['name'],
+      url: result['url'],
+      summary: summary(uri) || result['snippet'],
+      published_at: parse_published_at(result),
+      site_name: result['siteName'],
+      images: images(uri)
+    )
+  end
+
+  def parse_published_at(result)
+    return unless result['datePublished']
+
+    DateTime.iso8601(result['datePublished'])
   end
 end
