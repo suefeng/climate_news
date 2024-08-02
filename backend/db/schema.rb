@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2024_08_02_010250) do
+ActiveRecord::Schema[7.1].define(version: 2024_08_02_161657) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -21,15 +21,16 @@ ActiveRecord::Schema[7.1].define(version: 2024_08_02_010250) do
     t.json "images"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "category"
+    t.datetime "published_at"
+    t.string "site_name"
   end
 
-  create_table "news_messages", force: :cascade do |t|
+  create_table "news_messages", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.json "message_body"
     t.boolean "is_chatbot"
-    t.bigint "news_thread_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.index ["news_thread_id"], name: "index_news_messages_on_news_thread_id"
   end
 
   create_table "news_threads", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|

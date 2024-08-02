@@ -1,4 +1,4 @@
-class NewsMessagesController < ApplicationController
+class Api::V1::NewsMessagesController < ApplicationController
   before_action :set_news_message, only: %i[ show update destroy ]
 
   # GET /news_messages
@@ -15,10 +15,11 @@ class NewsMessagesController < ApplicationController
 
   # POST /news_messages
   def create
-    @news_message = NewsMessage.new(news_message_params)
+    query = "What's the latest climate news for #{Date.today.strftime('%B %d, %Y')}"
+    @news_message = NewsMessage.new(message_body: query)
 
     if @news_message.save
-      render json: @news_message, status: :created, location: @news_message
+      render json: @news_message, status: :created
     else
       render json: @news_message.errors, status: :unprocessable_entity
     end
