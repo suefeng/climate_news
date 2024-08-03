@@ -19,6 +19,7 @@ class Api::V1::NewsMessagesController < ApplicationController
       @news_message = NewsMessage.new(message_body: { "query": query }, is_bot: false)
 
       if @news_message.save
+
         render json: @news_message, status: :created
       else
         render json: @news_message.errors, status: :unprocessable_entity
