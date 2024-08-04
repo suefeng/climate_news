@@ -3,7 +3,7 @@ module NewsHelpers
     response = Net::HTTP.get_response(uri)
     return unless response.is_a?(Net::HTTPSuccess) && response.body
 
-    Nokogiri::HTML(response.body).css('body').css('p').first(5).map(&:text).join(' ')
+    Nokogiri::HTML(response.body, nil, Encoding::UTF_8.to_s).css('body').css('p').first(5).map(&:text).join(' ')&.strip
   end
 
   def images(uri)
@@ -13,7 +13,7 @@ module NewsHelpers
     html = Nokogiri::HTML(response.body)
     img_elements = html.css('body').css('img')
 
-    img_elements.select { |img| valid_src?(img['src']) }.pluck('src')
+    img_elements.select { |img| valid_src?(img['src']) }.pluck('src')[0..2]
   end
 
   def valid_src?(src)
@@ -32,6 +32,7 @@ module NewsHelpers
   def create_news_record(result)
     uri = URI(result['url'])
     return if News.exists?(url: result['url'])
+
     News.create(
       title: result['name'],
       url: result['url'],

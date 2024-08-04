@@ -14,10 +14,8 @@ class BingSearch < ApplicationService
   def call
     return { error: 'Invalid Bing Search API subscription key!' } unless valid_key?(@access_key)
 
-    uri = "#{@origin_uri}#{@path}?q=#{url_encode(@term)}&count=5&responseFilter=webpages,news"
-    results = Https.new(uri, 'Ocp-Apim-Subscription-Key', @access_key).call
-
-    results
+    uri = "#{@origin_uri}#{@path}?q=#{url_encode(@term)}&count=5&responseFilter=webpages,news&freshness=Day"
+    Https.new(uri, 'Ocp-Apim-Subscription-Key', @access_key).call
   end
 
   private

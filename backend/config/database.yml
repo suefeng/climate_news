@@ -14,7 +14,7 @@
 #
 default: &default
   adapter: postgresql
-  encoding: unicode
+  encoding: UTF8
   # For details on connection pooling, see Rails configuration guide
   # https://guides.rubyonrails.org/configuring.html#database-pooling
   pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
@@ -80,5 +80,5 @@ test:
 production:
   <<: *default
   database: climate_news_production
-  username: backend
+  username: climate_news
   password: <%= ENV["CLIMATE_NEWS_DATABASE_PASSWORD"] %>

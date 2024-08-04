@@ -15,8 +15,8 @@ class Api::V1::NewsMessagesController < ApplicationController
 
   # POST /news_messages
   def create
-    if NewsMessage.find_by("message_body->>'query' = ? AND is_bot = ?", query, false).nil?
-      @news_message = NewsMessage.new(message_body: { "query": query }, is_bot: false)
+    if NewsMessage.find_by("message_body->>'query' = ? AND is_bot = ?", query_text, false).nil?
+      @news_message = NewsMessage.new(message_body: { query: query_text }, is_bot: false)
 
       if @news_message.save
 
@@ -36,6 +36,14 @@ class Api::V1::NewsMessagesController < ApplicationController
 
   private
 
+  def query_text
+    if params[:news_message]
+      params[:news_message][:message_body]
+    else
+      "climate news and solutions for #{timestamp}"
+    end
+  end
+
   # Use callbacks to share common setup or constraints between actions.
   def set_news_message
     @news_message = NewsMessage.find(params[:id])
@@ -48,9 +56,5 @@ class Api::V1::NewsMessagesController < ApplicationController
 
   def timestamp
     Time.zone.today.strftime('%B %d, %Y')
-  end
-
-  def query
-    params[:news_message] ? params[:news_message][:message_body] : "What's the latest climate news for #{timestamp}"
   end
 end
