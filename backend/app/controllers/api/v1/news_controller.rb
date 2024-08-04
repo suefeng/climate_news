@@ -3,7 +3,7 @@ class Api::V1::NewsController < ApplicationController
 
   # GET /news
   def index
-    @news = News.all.order(published_at: :desc, created_at: :desc)
+    @news = News.order(published_at: :desc, created_at: :desc)
 
     render json: @news, status: :ok
   end
