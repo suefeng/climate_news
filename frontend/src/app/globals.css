@@ -31,3 +31,26 @@ body {
     text-wrap: balance;
   }
 }
+
+h1 {
+  @apply text-5xl; /* 48px */
+  @apply leading-none;
+  @apply my-4;
+}
+
+h2 {
+  @apply text-4xl; /* 36px */
+  @apply my-4;
+}
+
+p {
+  @apply leading-relaxed;
+}
+
+a {
+  @apply text-primary-700;
+}
+
+a:hover {
+  @apply text-primary-900;
+}
